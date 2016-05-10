@@ -84,6 +84,21 @@ func (ipt *IPTables) Insert(table, chain string, pos int, rulespec ...string) er
 	return ipt.run(cmd...)
 }
 
+// InsertUnique acts like Insert except that it won't add a duplicate
+func (ipt *IPTables) InsertUnique(table, chain string, rulespec ...string) error {
+	exists, err := ipt.Exists(table, chain, rulespec...)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		// if the rule number is 1, the rule or rules are inserted at the head of the chain
+		return ipt.Insert(table, chain, 1, rulespec...)
+	}
+
+	return nil
+}
+
 // Append appends rulespec to specified table/chain
 func (ipt *IPTables) Append(table, chain string, rulespec ...string) error {
 	cmd := append([]string{"-t", table, "-A", chain}, rulespec...)
@@ -115,7 +130,7 @@ func (ipt *IPTables) List(table, chain string) ([]string, error) {
 	var stdout, stderr bytes.Buffer
 	cmd := exec.Cmd{
 		Path:   ipt.path,
-		Args:   []string{ipt.path, "--wait", "-t", table, "-S", chain},
+		Args:   []string{ipt.path, "-t", table, "-S", chain},
 		Stdout: &stdout,
 		Stderr: &stderr,
 	}
@@ -160,7 +175,6 @@ func (ipt *IPTables) DeleteChain(table, chain string) error {
 
 func (ipt *IPTables) run(args ...string) error {
 	var stderr bytes.Buffer
-	args = append([]string{"--wait"}, args...)
 	cmd := exec.Cmd{
 		Path:   ipt.path,
 		Args:   append([]string{ipt.path}, args...),
