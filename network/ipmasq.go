@@ -33,7 +33,7 @@ func rules(ipn ip.IP4Net) [][]string {
 		// NAT if it's not multicast traffic
 		{"-s", n, "!", "-d", "224.0.0.0/4", "-j", "MASQUERADE"},
 		// Masquerade anything headed towards flannel from the host
-		{"!", "-s", n, "-d", n, "-j", "MASQUERADE"},
+		//{"!", "-s", n, "-d", n, "-j", "MASQUERADE"},
 	}
 }
 
