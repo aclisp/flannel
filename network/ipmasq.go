@@ -33,7 +33,7 @@ func rules(ipn ip.IP4Net) [][]string {
 		// NAT if it's not multicast traffic
 		{"-s", n, "!", "-d", "224.0.0.0/4", "-j", "MASQUERADE"},
 		// Masquerade anything headed towards flannel from the host
-		{"!", "-s", n, "-d", n, "-j", "MASQUERADE"},
+		//{"!", "-s", n, "-d", n, "-j", "MASQUERADE"},
 	}
 }
 
@@ -43,9 +43,11 @@ func setupIPMasq(ipn ip.IP4Net) error {
 		return fmt.Errorf("failed to set up IP Masquerade. iptables was not found")
 	}
 
-	for _, rule := range rules(ipn) {
-		log.Info("Adding iptables rule: ", strings.Join(rule, " "))
-		err = ipt.AppendUnique("nat", "POSTROUTING", rule...)
+	ruleList := rules(ipn)
+	for i := len(ruleList)-1; i >= 0; i-- {
+		rule := ruleList[i]
+		log.Info("Inserting at head iptables rule: ", strings.Join(rule, " "))
+		err = ipt.InsertUnique("nat", "POSTROUTING", rule...)
 		if err != nil {
 			return fmt.Errorf("failed to insert IP masquerade rule: %v", err)
 		}
